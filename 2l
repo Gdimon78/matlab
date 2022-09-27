@@ -1,0 +1,35 @@
+%% Read and listen
+fs = 8000;
+[bass, fs]=audioread('bass.mp3');
+[guitar, fs]=audioread('guitars.mp3');
+[synths, fs]=audioread('synths.mp3');
+[drums, fs]=audioread('drums.mp3');
+Lbass = length(bass);
+Lguitar = length(guitar);
+Lsynths = length(synths);
+Ldrums = length(drums);
+Num_Sec = Lbass/fs;
+%% Melody Matriiix
+melodyMatrix = [bass guitar synths drums];
+tmpVector=ones(4,1);
+melody = melodyMatrix*tmpVector;
+sound(melody, fs);
+%% Minus one
+Hit = melody - guitar;
+sound(Hit, fs);
+%% Signal distortion
+T = Num_Sec/2;
+timearray = (0 : Lbass-1);
+volumeMod = sin(2*pi*timearray/T);
+VolumeMod = volumeMod';
+Secondmelody = melody .* VolumeMod;
+sound(Secondmelody, fs);
+Hit2 = VolumeMod.^2.*2-1;
+Hit3 = Hit2 .* melody;
+sound(Hit3,fs);
+%% Shorten melody
+X = melodyMatrix'; 
+tmp = X(1:1:length(X(:))/2);
+halfMelodyMatrix = reshape(tmp, 4,length(tmp)/4);
+halfMelody = sum(halfMelodyMatrix);
+sound(halfMelody,fs)
