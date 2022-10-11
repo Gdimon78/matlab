@@ -1,0 +1,29 @@
+%% Filters design
+freqArray = [31, 62, 125, 250, 500, 1000, 2000, 4000, 8000,16000];
+order = 1024; 
+fs = 44100;
+bBank = CreateFilters(freqArray, order, fs);
+
+
+
+function bBank = CreateFilters(freqArray, order, fs)
+N = lenght(freqArray);
+freqArrayNorm = freqArray/(fs/2);
+bBank = zeros(N, order+1);
+for i = 1:N
+    if i == 1
+        mLow = [1, 1, 0, 0];
+        freqLow = [0, freqArrayNorm(1), 2*freqArrayNorm(1), 1];
+        bBank(1,:) = fir2(order, freqLow, mLow);
+    elseif i == N 
+        mHigh = [0, 0, 1, 1];
+        freqHigh = [0, freqArrayNorm(end)/2, freqArrayNorm(end), 1];
+        bBank(N, :) = fir2(order, freqHigh, mHigh);
+    else
+        mBand = [0, 0, 1, 0, 0];
+        freqBand = [0, freqArrayNorm(i-1), freqArrayNorm(i), freqArrayNorm(i+1), 1];
+        bBank(i, :) = fir2(order, freqBand, mBand);
+    end
+end
+
+end
