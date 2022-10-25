@@ -1,0 +1,92 @@
+%% Filters design 
+freqArray = [31, 62, 125, 250, 500, 1000, 2000, 4000,8000,16000]; 
+order = 1024; 
+fs = 44100; 
+
+
+bBank=CreateFilters(freqArray,order,fs); 
+
+
+
+%% Filtering of signals 
+[signal,fs] = audioread('song.mp3'); 
+gain=ones(length(freqArray),1); 
+initB=zeros(1,order); 
+tic 
+signalOut_1=FilteringBanks(signal,bBank,'filter',gain,initB); 
+toc 
+tic 
+signalOut_2=FilteringBanks(signal,bBank,'fftfilt',gain,initB); 
+toc 
+tic 
+signalOut_conv=FilteringBanks(signal,bBank,'convFilter',gain,initB); 
+toc 
+
+%% Stream sound 
+deviceWriter = audioDeviceWriter('SampleRate', fs); 
+fileReader = dsp.AudioFileReader('song.mp3'); 
+gain = [10 10 10 0.1*ones(1, 7)]'; 
+gain=ones(10,1); 
+while ~isDone(fileReader) 
+gain = rand(size(freqArray))'; 
+audioData = fileReader(); 
+[dataPortionFiltering,initB]=FilteringBanks(audioData,bBank,'filter',gain,initB); 
+deviceWriter(dataPortionFiltering) 
+end
+
+
+
+
+
+
+
+
+
+
+function bBank=CreateFilters(freqArray, order, fs) 
+
+freqArrayNorm = freqArray/(fs/2); 
+bBank=[]; 
+for i=1:length(freqArray) 
+
+if i==1 
+mLow = [1, 1, 0, 0]; 
+freqLow = [0, freqArrayNorm(1), 2*freqArrayNorm(1), 1]; 
+bLow = fir2(order, freqLow, mLow); 
+bBank=[bBank; bLow]; 
+elseif i==length(freqArray) 
+mHigh = [0, 0, 1, 1]; 
+freqHigh = [0, freqArrayNorm(end)/2, freqArrayNorm(end),1]; 
+bHigh = fir2(order, freqBand, mBand); 
+bBank=[bBank; bHigh]; 
+
+else 
+mBand = [0, 0, 1, 0, 0]; 
+freqBand = [0, freqArrayNorm(i-1), freqArrayNorm(i),freqArrayNorm(i+1), 1]; 
+bPass = fir2(order, freqBand, mBand); 
+bBank=[bBank; bPass]; 
+end 
+
+end
+
+
+
+
+
+
+
+
+
+function [signalOut,initB]=FilteringBanks(signal,bBank,typeOfFilter,gain,initB) 
+B_New=sum(gain.*bBank,1); 
+
+switch typeOfFilter 
+case 'filter' 
+[signalOut,initB] = filter(B_New, 1, signal, initB); 
+case 'fftfilt' 
+signalOut = fftfilt(B_New, signal); 
+case 'convFilter' 
+signalOut = convFilter(B_New, signal); 
+
+end 
+end
