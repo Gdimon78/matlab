@@ -20,9 +20,9 @@ classdef Equalizer < handle
              obj.fs = fs;
              obj.CreateFilters();
          end
-         function [signalOut, initB] =  Filtering(signal, bBank,gain, initB)
-             b = sum(gain .* bBank, 1);
-             [signalOut, initB] = filter(b, 1, signal, initB);
+         function [signalOut, initB] =  Filtering(obj,signal)
+             b = sum(obj.gain .* obj.bBank', 1);
+             [signalOut, initB] = filter(b, 1, signal, obj.initB);
          end
          function CreateFilters (obj)
             N = length(obj.freqArray);
@@ -44,13 +44,11 @@ classdef Equalizer < handle
             end
          end
          function [Hdb, w] = GetFreqResponse(obj)
-             b = sum(obj.gain.*obj.bBank');
-             for i = 1:10
-                 [H(i, :), w(i, :)] = freqz(b(i, :), 1, obj.order);
-             end
-             xdb = @(x)20*log10(x);
-             Hdb = xdb(abs(H));
-             w = (w/pi) * (obj.fs/2);
+             b = sum(obj.gain.*obj.bBank', 2);
+            [H(i, :), w(i, :)] = freqz(b(i, :), 1, obj.order);
+            xdb = @(x)20*log10(x);
+            Hdb = xdb(abs(H));
+            w = (w/pi) * (obj.fs/2);
          end
     end
 end
