@@ -44,8 +44,8 @@ classdef Equalizer < handle
             end
          end
          function [Hdb, w] = GetFreqResponse(obj)
-             b = sum(obj.gain.*obj.bBank', 2);
-            [H(i, :), w(i, :)] = freqz(b(i, :), 1, obj.order);
+            b = sum(obj.gain.*obj.bBank', 2);
+            [H, w] = freqz(b, 1, obj.order);
             xdb = @(x)20*log10(x);
             Hdb = xdb(abs(H));
             w = (w/pi) * (obj.fs/2);
