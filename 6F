@@ -18,40 +18,39 @@ classdef Equalizer < handle
          function obj = Equalizer(order, fs)
              obj.order = order;
              obj.fs = fs;
+             obj.CreateFilters();
          end
          function [signalOut, initB] =  Filtering(signal, bBank,gain, initB)
              b = sum(gain .* bBank, 1);
              [signalOut, initB] = filter(b, 1, signal, initB);
          end
-         function bBank = CreateFilters (obj, freqArray, order, fs)
-            N = length(freqArray);
-            freqArrayNorm = freqArray/(fs/2);
-            bBank = [];
+         function CreateFilters (obj)
+            N = length(obj.freqArray);
+            freqArrayNorm = obj.freqArray/(obj.fs/2);
             for i = 1:N
                 if i == 1
                     mlow = [1, 1, 0, 0];
                     freqLow = [0, freqArrayNorm(1), 2*freqArrayNorm(1), 1];
-                    bBank = [bBank; fir2(order, freqLow, mlow)];
+                   obj.bBank = [obj.bBank; fir2(obj.order, freqLow, mlow)];
             elseif i == N
                     mHigh = [0, 0, 1, 1];
                     freqHigh = [0, freqArrayNorm(end)/2, freqArrayNorm(end), 1];
-                    bBank = [bBank; fir2(order, freqHigh, mHigh)];
+                    obj.bBank = [obj.bBank; fir2(obj.order, freqHigh, mHigh)];
                 else
                     mBand = [0, 0, 1, 0, 0];
                     freqBand = [0, freqArrayNorm(i - 1), freqArrayNorm(i), freqArrayNorm(i + 1), 1];
-                    bBank = [bBank; fir2(order, freqBand, mBand)];
+                    obj.bBank = [obj.bBank;  fir2(obj.order, freqBand, mBand)];
                 end
             end
-            obj.bBank = bBank;
          end
-         function [Hdb]=GetFreqResponse(bBank, order, fs, gain)
-             b = sum(gain.*bBank)
+         function [Hdb, w] = GetFreqResponse(obj)
+             b = sum(obj.gain.*obj.bBank');
              for i = 1:10
-                 [H(i,:)]=freqz(b(i,:),1,order);
+                 [H(i, :), w(i, :)] = freqz(b(i, :), 1, obj.order);
              end
-             xdb=@(x)20*log10(x);
-             Hdb(abs(h));
-             w =(w/pi)*(fs/2);
+             xdb = @(x)20*log10(x);
+             Hdb = xdb(abs(H));
+             w = (w/pi) * (obj.fs/2);
          end
     end
 end
